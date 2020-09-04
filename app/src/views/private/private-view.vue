@@ -35,6 +35,7 @@
 
 				<div class="spacer" />
 
+				<api-preview />
 				<notifications-preview :drawer-open="drawerOpen" />
 			</div>
 		</aside>
@@ -68,6 +69,7 @@ import uploadFiles from '@/utils/upload-files';
 import i18n from '@/lang';
 import useEventListener from '@/composables/use-event-listener';
 import emitter, { Events } from '@/events';
+import ApiPreview from './components/api-preview/';
 
 export default defineComponent({
 	components: {
@@ -79,6 +81,7 @@ export default defineComponent({
 		NotificationsGroup,
 		NotificationsPreview,
 		NotificationItem,
+		ApiPreview,
 	},
 	props: {
 		title: {
@@ -255,13 +258,13 @@ export default defineComponent({
 @import '@/styles/mixins/breakpoint';
 
 .private-view {
+	--content-padding: 12px;
+	--content-padding-bottom: 60px;
+
 	display: flex;
 	width: 100%;
 	height: 100%;
 	background-color: var(--background-page);
-
-	--content-padding: 12px;
-	--content-padding-bottom: 60px;
 
 	.nav-overlay {
 		--v-overlay-z-index: 49;
