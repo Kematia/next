@@ -1,5 +1,5 @@
 <template>
-	<v-modal title="Preview API Request" :subtitle="path">
+	<v-modal title="Preview API Request" :subtitle="path" v-if="shouldRender">
 		<template #activator="{ on }">
 			<v-sheet style="text-align: center">
 				<v-button small outlined @click="on">Preview API Response</v-button>
@@ -52,6 +52,13 @@ import api from '@/api';
 export default defineComponent({
 	setup(props, { root }) {
 		const { path, params } = root.$route;
+
+		/* check if it's safe to render the component */
+		const shouldRender = computed(() => {
+			if (params.collection != null) return true;
+
+			return false;
+		});
 
 		const selectedTab = ref([]);
 
@@ -149,10 +156,13 @@ export default defineComponent({
 			}
 		}
 
-		previewApiResponse();
+		if (shouldRender.value) {
+			previewApiResponse();
+		}
 
 		return {
 			selectedTab,
+			shouldRender,
 			path,
 			fields,
 			formModel,
