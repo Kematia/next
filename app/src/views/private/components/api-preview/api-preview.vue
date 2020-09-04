@@ -8,11 +8,13 @@
 
 		<v-form v-model="formModel" :fields="fields" primaryKey="preview" @input="previewApiResponse()" />
 
-		<interface-code
-			v-bind="{ readOnly: true, language: 'json' }"
-			class="response-editor"
-			:value="JSON.stringify(responseModel, null, 5)"
-		/>
+		<div class="response--container">
+			<interface-code
+				v-bind="{ readOnly: true, language: 'json' }"
+				class="response--editor"
+				:value="JSON.stringify(responseModel, null, 5)"
+			/>
+		</div>
 
 		<template #footer="{ close }">
 			<v-button @click="close">Close</v-button>
@@ -21,8 +23,16 @@
 </template>
 
 <style lang="scss" scoped>
-.response-editor {
-	padding-top: 20px;
+.response--container {
+	margin-top: 20px;
+}
+.response--tabs,
+.response--label,
+.response--editor {
+	margin: 10px 0;
+}
+.response--title {
+	font-family: var(--family-monospace);
 }
 </style>
 
@@ -32,24 +42,34 @@ import { defineComponent, ref, reactive, computed, watch, watchEffect } from '@v
 import router from '@/router';
 import api from '@/api';
 
+/**
+ *
+ * TODO: add a v-if to render the component only when safe to do so
+ * TODO: when in settings request the actual items? so you can check it while building
+ * TODO: display the sdk/axios code to generate this request?
+ */
+
 export default defineComponent({
 	setup(props, { root }) {
 		const { path, params } = root.$route;
+
+		const selectedTab = ref([]);
+
 		const generateChoices = computed(() => {
 			const choices = [
 				{
-					text: 'All Items',
+					text: `All Items - items/${params.collection}`,
 					value: `items/${params.collection}`,
 				},
 				{
-					text: 'Collection Data',
+					text: `Collection Data - collections/${params.collection}`,
 					value: `collections/${params.collection}`,
 				},
 			];
 
 			if (params.primaryKey) {
 				choices.unshift({
-					text: 'Current Item',
+					text: `Current Item - items/${params.collection}/${params.primaryKey}`,
 					value: `items/${params.collection}/${params.primaryKey}`,
 				});
 			}
@@ -104,7 +124,6 @@ export default defineComponent({
 
 		async function previewApiResponse() {
 			let config: AxiosRequestConfig | undefined;
-			const requestPath = formModel.value['preview-kind'];
 
 			responseModel.value.data = null;
 			responseModel.value.error = null;
@@ -122,7 +141,7 @@ export default defineComponent({
 				console.log('Preview API request as Current Role');
 			}
 			try {
-				const { data } = await api.get(requestPath, config);
+				const { data } = await api.get(formModel.value['preview-kind'], config);
 				responseModel.value.data = data.data;
 			} catch (error) {
 				delete error.stack;
@@ -133,6 +152,7 @@ export default defineComponent({
 		previewApiResponse();
 
 		return {
+			selectedTab,
 			path,
 			fields,
 			formModel,
