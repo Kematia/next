@@ -8,21 +8,35 @@
 					</template>
 
 					<template #input>
-						<div class="name">
-							{{ field.name }}
+						<div class="label">
+							<span class="name" v-tooltip="field.name">{{ field.field }}</span>
 							<span class="interface">{{ interfaceName }}</span>
 						</div>
 					</template>
 
 					<template #append>
-						<v-icon
-							v-if="hidden"
-							name="visibility_off"
-							class="hidden-icon"
-							v-tooltip="$t('hidden_field')"
-							small
-						/>
-						<v-icon @click.stop="toggle" name="more_vert" />
+						<div class="icons">
+							<v-icon
+								v-if="field.schema && field.schema.is_primary_key"
+								name="vpn_key"
+								small
+								v-tooltip="$t('primary_key')"
+							/>
+							<v-icon
+								v-if="!field.meta"
+								name="report_problem"
+								small
+								v-tooltip="$t('db_only_click_to_configure')"
+							/>
+							<v-icon
+								v-if="hidden"
+								name="visibility_off"
+								class="hidden-icon"
+								v-tooltip="$t('hidden_field')"
+								small
+							/>
+							<v-icon @click.stop="toggle" name="more_vert" />
+						</div>
 					</template>
 				</v-input>
 			</template>
@@ -55,33 +69,28 @@
 
 				<v-divider />
 
-				<v-list-item
-					@click="setWidth('half')"
-					:disabled="hidden || (field.meta && field.meta.width === 'half')"
-				>
+				<v-list-item @click="setWidth('half')" :disabled="field.meta && field.meta.width === 'half'">
 					<v-list-item-icon><v-icon name="border_vertical" /></v-list-item-icon>
 					<v-list-item-content>{{ $t('half_width') }}</v-list-item-content>
 				</v-list-item>
 
-				<v-list-item
-					@click="setWidth('full')"
-					:disabled="hidden || (field.meta && field.meta.width === 'full')"
-				>
+				<v-list-item @click="setWidth('full')" :disabled="field.meta && field.meta.width === 'full'">
 					<v-list-item-icon><v-icon name="border_right" /></v-list-item-icon>
 					<v-list-item-content>{{ $t('full_width') }}</v-list-item-content>
 				</v-list-item>
 
-				<v-list-item
-					@click="setWidth('fill')"
-					:disabled="hidden || (field.meta && field.meta.width === 'fill')"
-				>
+				<v-list-item @click="setWidth('fill')" :disabled="field.meta && field.meta.width === 'fill'">
 					<v-list-item-icon><v-icon name="aspect_ratio" /></v-list-item-icon>
 					<v-list-item-content>{{ $t('fill_width') }}</v-list-item-content>
 				</v-list-item>
 
 				<v-divider />
 
-				<v-list-item @click="deleteActive = true" class="danger">
+				<v-list-item
+					@click="deleteActive = true"
+					class="danger"
+					:disabled="field.schema && field.schema.is_primary_key === true"
+				>
 					<v-list-item-icon><v-icon name="delete" outline /></v-list-item-icon>
 					<v-list-item-content>
 						{{ $t('delete_field') }}
@@ -94,11 +103,15 @@
 			<v-card class="duplicate">
 				<v-card-title>{{ $t('duplicate_where_to') }}</v-card-title>
 				<v-card-text>
-					<span class="type-label">{{ $tc('collection', 0) }}</span>
-					<v-select class="monospace" :items="collections" v-model="duplicateTo" />
+					<div class="duplicate-field">
+						<span class="type-label">{{ $tc('collection', 0) }}</span>
+						<v-select class="monospace" :items="collections" v-model="duplicateTo" />
+					</div>
 
-					<span class="type-label">{{ $tc('field', 0) }}</span>
-					<v-input class="monospace" v-model="duplicateName" />
+					<div class="duplicate-field">
+						<span class="type-label">{{ $tc('field', 0) }}</span>
+						<v-input class="monospace" v-model="duplicateName" />
+					</div>
 				</v-card-text>
 				<v-card-actions>
 					<v-button secondary @click="duplicateActive = false">
@@ -129,6 +142,8 @@ import { Field } from '@/types';
 import { useCollectionsStore, useFieldsStore } from '@/stores/';
 import { getInterfaces } from '@/interfaces';
 import router from '@/router';
+import notify from '@/utils/notify';
+import { i18n } from '@/lang';
 
 export default defineComponent({
 	props: {
@@ -236,6 +251,12 @@ export default defineComponent({
 
 				try {
 					await fieldsStore.createField(duplicateTo.value, newField);
+
+					notify({
+						title: i18n.t('field_create_success', { field: newField.name }),
+						type: 'success',
+					});
+
 					duplicateActive.value = false;
 				} catch (error) {
 					console.log(error);
@@ -287,8 +308,6 @@ export default defineComponent({
 
 	&.hidden-icon {
 		--v-icon-color-hover: var(--foreground-subdued);
-
-		margin-right: 4px;
 	}
 }
 
@@ -297,18 +316,22 @@ export default defineComponent({
 }
 
 .duplicate {
-	.text-label {
+	.type-label {
 		margin-bottom: 4px;
 	}
 
-	.v-select {
+	.duplicate-field + .duplicate-field {
 		margin-bottom: 32px;
 	}
 }
 
 .field {
-	.name {
+	.label {
 		flex-grow: 1;
+
+		.name {
+			font-family: var(--family-monospace);
+		}
 
 		.interface {
 			display: none;
@@ -324,7 +347,7 @@ export default defineComponent({
 	}
 
 	&:hover {
-		.name {
+		.label {
 			.interface {
 				opacity: 1;
 			}
@@ -336,5 +359,11 @@ export default defineComponent({
 	--v-list-item-color: var(--danger);
 	--v-list-item-color-hover: var(--danger);
 	--v-list-item-icon-color: var(--danger);
+}
+
+.icons {
+	.v-icon + .v-icon:not(:last-child) {
+		margin-left: 8px;
+	}
 }
 </style>

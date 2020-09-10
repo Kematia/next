@@ -33,14 +33,18 @@
 				secondary
 				exact
 				v-tooltip.bottom="$t('back')"
-				:to="backLink"
+				@click="$router.go(-1)"
 			>
 				<v-icon name="arrow_back" />
 			</v-button>
 		</template>
 
-		<template #headline v-if="collectionInfo.meta.singleton === false">
-			<v-breadcrumb :items="breadcrumb" />
+		<template #headline>
+			<v-breadcrumb
+				v-if="collectionInfo.meta.singleton === true"
+				:items="[{ name: $t('collections'), to: '/collections' }]"
+			/>
+			<v-breadcrumb v-else :items="breadcrumb" />
 		</template>
 
 		<template #actions>
@@ -139,6 +143,7 @@
 			:collection="collection"
 			:batch-mode="isBatch"
 			:primary-key="primaryKey || '+'"
+			:validation-errors="validationErrors"
 			v-model="edits"
 		/>
 
@@ -243,6 +248,7 @@ export default defineComponent({
 			saveAsCopy,
 			isBatch,
 			refresh,
+			validationErrors,
 		} = useItem(collection, primaryKey);
 
 		const hasEdits = computed<boolean>(() => Object.keys(edits.value).length > 0);
@@ -252,8 +258,6 @@ export default defineComponent({
 
 		const confirmLeave = ref(false);
 		const leaveTo = ref<string | null>(null);
-
-		const backLink = computed(() => `/collections/${collection.value}/`);
 
 		const templateValues = computed(() => {
 			return {
@@ -299,7 +303,6 @@ export default defineComponent({
 		return {
 			item,
 			loading,
-			backLink,
 			error,
 			isNew,
 			edits,
@@ -333,6 +336,7 @@ export default defineComponent({
 			isArchived,
 			updateAllowed,
 			toggleArchive,
+			validationErrors,
 		};
 
 		function useBreadcrumb() {
@@ -371,7 +375,12 @@ export default defineComponent({
 			if (saveAllowed.value === false || hasEdits.value === false) return;
 
 			await save();
-			router.push(`/collections/${props.collection}/+`);
+
+			if (isNew.value === true) {
+				refresh();
+			} else {
+				router.push(`/collections/${props.collection}/+`);
+			}
 		}
 
 		async function saveAsCopyAndNavigate() {

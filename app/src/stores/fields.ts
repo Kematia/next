@@ -4,10 +4,10 @@ import VueI18n from 'vue-i18n';
 import { notEmpty } from '@/utils/is-empty/';
 import { i18n } from '@/lang';
 import formatTitle from '@directus/format-title';
-import notify from '@/utils/notify';
 import { useRelationsStore } from '@/stores/';
 import { Relation, FieldRaw, Field } from '@/types';
 import { merge } from 'lodash';
+import { nanoid } from 'nanoid';
 
 const fakeFilesField: Field = {
 	collection: 'directus_files',
@@ -35,6 +35,15 @@ const fakeFilesField: Field = {
 		note: null,
 	},
 };
+
+/**
+ * @NOTE
+ * This keeps track of what update is the last one that's in progress. After every update, the store
+ * gets flushed with the updated values, which means that you can have racing conditions if you do
+ * multiple updates at the same time. By keeping track which one is the last one that's fired, we
+ * can ensure that only the last update gets used to flush the store with.
+ */
+let currentUpdate: string;
 
 export const useFieldsStore = createStore({
 	id: 'fieldsStore',
@@ -101,24 +110,18 @@ export const useFieldsStore = createStore({
 			try {
 				const response = await api.post(`/fields/${collectionKey}`, newField);
 
+				const field = this.parseField(response.data.data);
+
 				this.state.fields = this.state.fields.map((field) => {
 					if (field.collection === collectionKey && field.field === newField.field) {
-						return this.parseField(response.data.data);
+						return field;
 					}
 
 					return field;
 				});
 
-				notify({
-					title: i18n.t('field_create_success', { field: newField.field }),
-					type: 'success',
-				});
+				return field;
 			} catch (error) {
-				notify({
-					title: i18n.t('field_create_failure', { field: newField.field }),
-					type: 'error',
-				});
-
 				// reset the changes if the api sync failed
 				this.state.fields = stateClone;
 				throw error;
@@ -148,24 +151,17 @@ export const useFieldsStore = createStore({
 
 					return field;
 				});
-
-				notify({
-					title: i18n.t('field_update_success', { field: fieldKey }),
-					type: 'success',
-				});
 			} catch (error) {
-				notify({
-					title: i18n.t('field_update_failure', { field: fieldKey }),
-					type: 'error',
-				});
-
 				// reset the changes if the api sync failed
 				this.state.fields = stateClone;
 				throw error;
 			}
 		},
 		async updateFields(collectionKey: string, updates: Partial<Field>[]) {
+			const updateID = nanoid();
 			const stateClone = [...this.state.fields];
+
+			currentUpdate = updateID;
 
 			// Update locally first, so the changes are visible immediately
 			this.state.fields = this.state.fields.map((field) => {
@@ -185,28 +181,19 @@ export const useFieldsStore = createStore({
 				// API
 				const response = await api.patch(`/fields/${collectionKey}`, updates);
 
-				this.state.fields = this.state.fields.map((field) => {
-					if (field.collection === collectionKey) {
-						const newDataForField = response.data.data.find(
-							(update: Field) => update.field === field.field
-						);
-						if (newDataForField) return this.parseField(newDataForField);
-					}
+				if (currentUpdate === updateID) {
+					this.state.fields = this.state.fields.map((field) => {
+						if (field.collection === collectionKey) {
+							const newDataForField = response.data.data.find(
+								(update: Field) => update.field === field.field
+							);
+							if (newDataForField) return this.parseField(newDataForField);
+						}
 
-					return field;
-				});
-
-				notify({
-					title: i18n.t('fields_update_success'),
-					text: updates.map(({ field }) => field).join(', '),
-					type: 'success',
-				});
+						return field;
+					});
+				}
 			} catch (error) {
-				notify({
-					title: i18n.t('fields_update_failed'),
-					text: updates.map(({ field }) => field).join(', '),
-					type: 'error',
-				});
 				// reset the changes if the api sync failed
 				this.state.fields = stateClone;
 				throw error;
@@ -222,16 +209,7 @@ export const useFieldsStore = createStore({
 
 			try {
 				await api.delete(`/fields/${collectionKey}/${fieldKey}`);
-
-				notify({
-					title: i18n.t('field_delete_success', { field: fieldKey }),
-					type: 'success',
-				});
 			} catch (error) {
-				notify({
-					title: i18n.t('field_delete_failure', { field: fieldKey }),
-					type: 'error',
-				});
 				this.state.fields = stateClone;
 				throw error;
 			}

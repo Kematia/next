@@ -43,7 +43,7 @@
 		<v-overlay class="nav-overlay" :active="navOpen" @click="navOpen = false" />
 		<v-overlay class="drawer-overlay" :active="drawerOpen" @click="drawerOpen = false" />
 
-		<notifications-group v-if="drawerOpen === false" :dense="drawerOpen === false" />
+		<notifications-group :dense="drawerOpen === false" />
 
 		<template v-if="showDropEffect">
 			<div class="drop-border top" />
@@ -238,6 +238,8 @@ export default defineComponent({
 						});
 					},
 				});
+
+				notificationsStore.remove(fileUploadNotificationID);
 
 				emitter.emit(Events.upload);
 
