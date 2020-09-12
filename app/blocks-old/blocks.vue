@@ -1,14 +1,19 @@
 <template>
 	<div>
-		{{ index }} - {{ modalIsActive }}
+		<div style="text-align: right" v-if="languages != null && languages.length > 0 && selectedLanguage != null">
+			<v-button
+				v-for="language in languages"
+				:key="language.code"
+				@click="websitesStore.setLanguage(language)"
+				x-small
+				:secondary="selectedLanguage.code !== language.code"
+				style="margin-right: 12px"
+			>
+				{{ language.label }}
+			</v-button>
+		</div>
 
-		<display :blocks="value" @edit="edit" @remove="remove" />
-
-		<v-divider />
-
-		{{ editor }}
-		<v-divider />
-		{{ update }}
+		<display :blocks="value" @edit="edit" @remove="remove" :selectedLanguage="selectedLanguage" />
 
 		<v-button class="add-block" align="center" outlined large full-width @click="modalIsActive = true">
 			<v-icon name="add" />
@@ -49,20 +54,57 @@
 							</template>
 						</v-tab-item>
 						<v-tab-item>
-							<v-sheet style="text-align: center">
+							<v-sheet
+								v-if="customBlockTypes == null || customBlockTypes.length === 0"
+								style="text-align: center"
+							>
 								<h2>No custom Block Types loaded.</h2>
 							</v-sheet>
+							<template v-else v-for="blockType in customBlockTypes">
+								<v-card class="block-card" :key="blockType.key">
+									<v-card-title>
+										{{ blockType.label }}
+									</v-card-title>
+									<v-card-text>
+										{{ blockType.description }}
+									</v-card-text>
+									<v-card-actions>
+										<v-button small secondary @click="create(blockType)">
+											Add {{ blockType.label }}
+										</v-button>
+									</v-card-actions>
+								</v-card>
+							</template>
 						</v-tab-item>
 					</v-tabs-items>
 				</template>
 			</template>
 			<template v-else>
+				<div
+					style="text-align: right"
+					v-if="languages != null && languages.length > 0 && selectedLanguage != null"
+				>
+					{{ selectedLanguage }}
+					<v-button
+						v-for="language in languages"
+						:key="language.code"
+						@click="websitesStore.setLanguage(language)"
+						x-small
+						:secondary="selectedLanguage.code !== language.code"
+						style="margin-right: 12px"
+					>
+						{{ language.label }}
+					</v-button>
+				</div>
+
+				{{ update }}
 				<v-form
 					:fields="editor.blockType.fields"
 					:primary-key="editor.uuid"
 					:initial-values="editor"
 					v-model="editor"
 					@input="hasChanges = true"
+					:languages="languages"
 				/>
 			</template>
 
@@ -78,90 +120,19 @@
 				</div>
 			</template>
 		</v-modal>
-		<!-- <v-modal
-			v-model="modalIsActive"
-			title="Add Block"
-			:subtitle="blockEditor ? `Setup ${blockEditor.blockType.label} block` : `Add a block`"
-		>
-			<template #activator="{ on }">
-				<v-button class="add-block" align="center" outlined large full-width @click="on">
-					<v-icon name="add" />
-					{{ $t('add_block') }}
-				</v-button>
-			</template>
-			<template #sidebar v-if="blockEditor == null">
-				<v-tabs v-model="tabSelection" vertical>
-					<v-tab>Default blocks</v-tab>
-					<v-tab>Custom blocks</v-tab>
-				</v-tabs>
-			</template>
-			<template v-if="blockEditor == null">
-				<template>
-					<v-tabs-items v-model="tabSelection">
-						<v-tab-item>
-							<template v-for="blockType in defaultBlockTypes">
-								<v-card class="block-card" :key="blockType.key">
-									<v-card-title>
-										{{ blockType.label }}
-									</v-card-title>
-									<v-card-text>
-										{{ blockType.description }}
-									</v-card-text>
-									<v-card-actions>
-										<v-button small secondary @click="createNewBlock(blockType)">
-											Add {{ blockType.label }}
-										</v-button>
-									</v-card-actions>
-								</v-card>
-							</template>
-						</v-tab-item>
-						<v-tab-item>
-							<v-sheet style="text-align: center">
-								<h2>No custom Block Types loaded.</h2>
-							</v-sheet>
-						</v-tab-item>
-					</v-tabs-items>
-				</template>
-			</template>
-			<template v-else>
-				{{ blockEditor }}
-				<hr />
-				{{ blockIndex }}
-
-				<hr />
-
-				<v-form
-					:fields="blockEditor.blockType.fields"
-					:primary-key="blockEditor.uuid"
-					:initial-values="blockEditor"
-					v-model="blockEditor"
-					@input="setupCompleted = true"
-				/>
-			</template>
-
-			<template #footer="{ close }">
-				<div class="blocks-footer">
-					<v-button v-if="blockEditor != null" :disabled="!setupCompleted" @click="saveBlock()">
-						{{ $t('save') }}
-					</v-button>
-					<v-button v-if="blockEditor != null" @click="setBlockEditor(null)" secondary>
-						{{ $t('back') }}
-					</v-button>
-					<v-button @click="close" secondary>{{ $t('close') }}</v-button>
-				</div>
-			</template>
-		</v-modal> -->
 	</div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import { defineComponent, ref, reactive, computed, toRefs, watchEffect } from '@vue/composition-api';
+import { defineComponent, ref, reactive, computed, toRefs, watchEffect, provide } from '@vue/composition-api';
 
+import api from '@/api';
 import useItem from '@/composables/use-item';
 
-import { defaultBlockTypes } from './data';
+import { defaultBlockTypes, customBlockTypes } from './data';
 import { Block, BlockType } from './blocks';
+import { useWebsitesStore } from '@/stores';
 
 import display from './display.vue';
 
@@ -174,6 +145,13 @@ export default defineComponent({
 		},
 	},
 	setup(props, { emit }) {
+		const websitesStore = useWebsitesStore();
+		websitesStore.hydrate();
+
+		/** Component data */
+		const languages = computed(() => websitesStore.state.languages);
+		const selectedLanguage = computed(() => websitesStore.state.selectedLanguage);
+
 		/** Modal data */
 		const tabSelection = ref([]);
 		const modalIsActive = ref(false);
@@ -186,15 +164,13 @@ export default defineComponent({
 		// @ts-ignore
 		const editor = computed({
 			get: () => {
-				console.log(props.value);
-				if (props.value) {
+				if (props.value != null) {
+					if (update.value != null) return update.value;
+
 					const selected = props.value[index.value];
-					if (selected == null && update.value != null) return update.value;
 
 					return selected;
 				}
-
-				initialize();
 			},
 
 			set: (u) => {
@@ -203,6 +179,11 @@ export default defineComponent({
 		});
 
 		function create(blockType) {
+			if (props.value == null) {
+				console.log('initializing...', props.value);
+				initializeBlocks();
+			}
+
 			editor.value = new Block(blockType);
 		}
 
@@ -210,7 +191,6 @@ export default defineComponent({
 			index.value = i;
 		}
 		function remove(index) {
-			console.log(index);
 			props.value.splice(index, 1);
 			emit('input', props.value);
 		}
@@ -233,16 +213,16 @@ export default defineComponent({
 			}
 			emit('input', updated);
 			reset();
+			modalIsActive.value = false;
 		}
 
 		function reset() {
 			index.value = null;
 			update.value = null;
 			editor.value = null;
-			modalIsActive.value = false;
 		}
 
-		function initialize() {
+		function initializeBlocks() {
 			emit('input', []);
 		}
 
@@ -251,9 +231,13 @@ export default defineComponent({
 		});
 
 		return {
+			languages,
+			selectedLanguage,
+			websitesStore,
 			tabSelection,
 			modalIsActive,
 			defaultBlockTypes,
+			customBlockTypes,
 			editor,
 			hasChanges,
 			index,
@@ -285,7 +269,6 @@ export default defineComponent({
 	}
 }
 .block-card {
-	--v-card-background-color: red;
 	--v-card-max-width: 200px;
 }
 .blocks-footer {

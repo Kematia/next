@@ -9,6 +9,7 @@
 			<v-sheet class="block-display" :key="block.uuid">
 				<div class="block-display__header">
 					<h4>{{ block.blockType.label }}</h4>
+					<span class="block-display__meta-note">{{ block.blockType.description }}</span>
 					<div class="block-display__button-group">
 						<v-button
 							class="block-display__button"
@@ -34,10 +35,23 @@
 				<template v-for="field in block.blockType.fields">
 					<template v-if="field.display && block[field.field]">
 						<div class="block-display__field" :key="field.field">
-							<!-- <span class="block-display__meta-note">{{ field.meta ? field.meta.note : null }}</span> -->
-							<component :is="field.display.tag" :class="field.display.class">
-								{{ block[field.field] }}
-							</component>
+							<template v-if="selectedLanguage">
+								<component
+									v-if="block[field.field][selectedLanguage.code]"
+									:is="field.display.tag"
+									:class="field.display.class"
+								>
+									{{ block[field.field][selectedLanguage.code] }}
+								</component>
+								<v-notice v-else type="warning">
+									Missing content for {{ block.blockType.label }} in {{ selectedLanguage.label }}
+								</v-notice>
+							</template>
+							<template v-else>
+								<component :is="field.display.tag" :class="field.display.class">
+									{{ block[field.field] }}
+								</component>
+							</template>
 						</div>
 					</template>
 					<template v-else-if="field.display == null">
@@ -56,6 +70,10 @@ export default defineComponent({
 	props: {
 		blocks: {
 			type: Array,
+			default: null,
+		},
+		selectedLanguage: {
+			type: Object,
 			default: null,
 		},
 	},
@@ -89,7 +107,8 @@ export default defineComponent({
 	opacity: 0.8;
 }
 .block-display__default-title {
-	background-color: red;
+	font-weight: 700;
+	font-size: 24px;
 }
 .block-display__html_id {
 	background-color: yellow;
