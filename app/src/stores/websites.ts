@@ -18,8 +18,20 @@ export const useWebsitesStore = createStore({
 			if (this.state.selectedLanguage == null) this.state.selectedLanguage = this.state.languages[0];
 
 			const blocksRequest = await api.get('collections');
-			blocksRequest.data.data.map(({ collection }) => {
-				if (collection.startsWith('blocks_')) this.state.defaultBlocks.push(collection);
+			blocksRequest.data.data.map(async ({ collection }) => {
+				if (collection.startsWith('blocks_')) {
+					const blockCollectionRequest = await api.get('/collections/' + collection);
+					const blockCollection = blockCollectionRequest.data.data;
+
+					const blockFieldsRequest = await api.get('/fields/' + collection);
+					const blockFields = blockFieldsRequest.data.data;
+
+					this.state.defaultBlocks.push({
+						type: collection,
+						meta: blockCollection.meta,
+						fields: [...blockFields],
+					});
+				}
 			});
 		},
 
