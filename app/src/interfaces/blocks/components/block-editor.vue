@@ -5,15 +5,20 @@
 		:title="isNewBlock ? 'Create new Block' : 'Edit Block'"
 		:subtitle="isNewBlock ? 'Adding new block' : 'Editing block'"
 	>
-		<template #sidebar v-if="updatedBlock == null">
-			<v-tabs v-model="tabSelection" vertical>
+		<template #sidebar>
+			<v-tabs v-model="tabBlockSelection" vertical v-if="updatedBlock == null">
 				<v-tab>Default blocks</v-tab>
+			</v-tabs>
+			<v-tabs v-model="currentConfigurationCategory" vertical v-else-if="getConfigurationCategories != null">
+				<v-tab v-for="(category, index) in getConfigurationCategories" :key="index">
+					{{ category.label }} - {{ index }}
+				</v-tab>
 			</v-tabs>
 		</template>
 
 		<template #default>
 			<!-- BLOCK TYPE SELECTION VIEW -->
-			<v-tabs-items v-model="tabSelection" v-if="updatedBlock == null">
+			<v-tabs-items v-model="tabBlockSelection" v-if="updatedBlock == null">
 				<v-tab-item>
 					<template v-for="{ type, meta } in availableBlocks.defaultBlocks">
 						<v-card class="block-card" :key="type">
@@ -30,14 +35,18 @@
 					</template>
 				</v-tab-item>
 			</v-tabs-items>
-			<template v-else-if="getTypeData">
-				<v-form
-					@input="hasChanges = true"
-					:fields="getTypeData.fields"
-					:primary-key="updatedBlock.uuid"
-					v-model="formEdits"
-					:initial-values="updatedBlock"
-				/>
+			<template v-else-if="getConfigurationCategories[currentConfigurationCategory].fields">
+				<template v-for="category in getConfigurationCategories">
+					<v-form
+						v-show="getConfigurationCategories[currentConfigurationCategory].key === category.key"
+						:key="category.key"
+						@input="hasChanges = true"
+						:fields="category.fields"
+						:primary-key="updatedBlock.uuid"
+						v-model="formEdits"
+						:initial-values="updatedBlock"
+					/>
+				</template>
 			</template>
 		</template>
 
@@ -79,7 +88,8 @@ export default defineComponent({
 			get: () => props.value,
 			set: (update) => emit('input', update),
 		});
-		const tabSelection = ref([]);
+		const tabBlockSelection = ref([]);
+		const currentConfigurationCategory = ref([0]);
 
 		function closeModal() {
 			updatedBlock.value = null;
@@ -96,6 +106,36 @@ export default defineComponent({
 			if (updatedBlock != null) {
 				return props.availableBlocks.defaultBlocks.find((b) => updatedBlock.value.type === b.type);
 			}
+		});
+
+		/** extracts the categories from the field names */
+		const getConfigurationCategories = computed(() => {
+			const configurationCategories = [
+				{
+					key: 'content',
+					label: 'Block Content',
+					fields: [],
+				},
+				{
+					key: 'display',
+					label: 'Display Options',
+					fields: [],
+				},
+				{
+					key: 'other',
+					label: 'Other',
+					fields: [],
+				},
+			];
+			if (getTypeData.value) {
+				getTypeData.value.fields.map((field) => {
+					if (field.field.startsWith('content')) configurationCategories[0].fields.push(field);
+					else if (field.field.startsWith('display')) configurationCategories[1].fields.push(field);
+					else configurationCategories[2].fields.push(field);
+				});
+			}
+
+			return configurationCategories;
 		});
 
 		/** Blocks CRUD */
@@ -129,9 +169,11 @@ export default defineComponent({
 		return {
 			modalState,
 			closeModal,
-			tabSelection,
+			tabBlockSelection,
 			isNewBlock,
 			getTypeData,
+			currentConfigurationCategory,
+			getConfigurationCategories,
 			hasChanges,
 			updatedBlock,
 			create,

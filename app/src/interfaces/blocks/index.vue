@@ -1,6 +1,17 @@
 <template>
 	<div>
-		{{ blockToEdit }}
+		<div style="text-align: right" v-if="languages != null && languages.length > 0 && selectedLanguage != null">
+			<v-button
+				v-for="language in languages"
+				:key="language.code"
+				@click="websitesStore.setLanguage(language)"
+				x-small
+				:secondary="selectedLanguage.code !== language.code"
+				style="margin-right: 12px"
+			>
+				{{ language.label }}
+			</v-button>
+		</div>
 		<block-display :blocksData="blockData" @edit="editBlock" @remove="removeBlock" />
 		<block-editor
 			v-model="modalState"
@@ -33,8 +44,12 @@ export default defineComponent({
 		BlockDisplay,
 	},
 	setup(props, { emit }) {
+		// component data && init
 		const websitesStore = useWebsitesStore();
 		websitesStore.hydrate();
+
+		const languages = computed(() => websitesStore.state.languages);
+		const selectedLanguage = computed(() => websitesStore.state.selectedLanguage);
 
 		const modalState = ref(false);
 		const defaultBlocks = computed(() => websitesStore.state.defaultBlocks);
@@ -49,27 +64,20 @@ export default defineComponent({
 		const blockToEdit = ref(null);
 
 		function updateBlock(block) {
-			console.log('updating', block);
-
 			const i = blockData.value.findIndex((b) => b.uuid === block.uuid);
 			blockData.value.splice(i, 1, block);
 			emit('input', blockData.value);
 		}
 
 		function createBlock(block) {
-			console.log('creating', block);
-
 			blockData.value.push(block);
 			emit('input', blockData.value);
 		}
 
 		function editBlock(block) {
-			console.log('editing', block);
 			blockToEdit.value = block;
 		}
 		function removeBlock(block) {
-			console.log('remove', block);
-
 			if (confirm('Are you sure you want to delete this block?')) {
 				const i = blockData.value.findIndex((b) => b.uuid === block.uuid);
 				blockData.value.splice(i, 1);
@@ -80,6 +88,9 @@ export default defineComponent({
 		return {
 			blockData,
 			modalState,
+			languages,
+			selectedLanguage,
+			websitesStore,
 			availableBlocks: {
 				defaultBlocks,
 			},
