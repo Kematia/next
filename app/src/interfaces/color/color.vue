@@ -1,9 +1,9 @@
 <template>
-	<v-menu attached :disabled="disabled" v-model="menuActive">
+	<v-menu attached :disabled="disabled" v-model="menuActive" :close-on-content-click="false">
 		<template #activator>
 			<v-input
 				:disabled="disabled"
-				:placeholder="$t('choose_a_color')"
+				:placeholder="$t('interfaces.color.placeholder')"
 				v-model="hexValue"
 				:pattern="/#([a-f\d]{2}){3}/i"
 				class="color-input"

@@ -10,6 +10,8 @@
 	"only_show_the_file_extension": "Only show the file extension",
 	"textarea": "Textarea",
 
+	"role_name": "Role Name",
+
 	"db_only_click_to_configure": "Database Only: Click to Configure ",
 
 	"show_archived_items": "Show Archived Items",
@@ -17,6 +19,7 @@
 	"create_preset": "Create Preset",
 	"create_role": "Create Role",
 	"create_user": "Create User",
+	"create_webhook": "Create Webhook",
 
 	"rename_folder": "Rename Folder",
 	"delete_folder": "Delete Folder",
@@ -102,13 +105,13 @@
 	"show_field_on_detail": "Show Field on Detail",
 	"delete_field": "Delete Field",
 	"fields_and_layout": "Fields & Layout",
-	"field_create_success": "Field \"{field}\" created",
-	"field_update_success": "Field \"{field}\" updated",
-	"field_delete_success": "Field \"{field}\" deleted",
+	"field_create_success": "Created Field: \"{field}\"",
+	"field_update_success": "Updated Field: \"{field}\"",
+	"field_delete_success": "Deleted Field: \"{field}\"",
 	"field_create_failure": "Could not create \"{field}\"",
 	"field_update_failure": "Could not update \"{field}\"",
 	"field_delete_failure": "Could not delete \"{field}\"",
-	"fields_update_success": "Fields updated",
+	"fields_update_success": "Fields Updated",
 	"fields_update_failure": "Could not update fields",
 	"duplicate_where_to": "Where would you like to duplicate this field to?",
 	"editing_field": "Editing {field}",
@@ -223,6 +226,7 @@
 	"translations": "Translations",
 	"note": "Note",
 	"enter_a_value": "Enter a value...",
+	"enter_a_placeholder": "Enter a placeholder...",
 	"length": "Length",
 	"required": "Required",
 	"readonly": "Readonly",
@@ -230,6 +234,7 @@
 	"hide_on_browse": "Hide on Browse",
 	"unique": "Unique",
 	"primary_key": "Primary Key",
+	"foreign_key": "Foreign Key",
 	"validation_regex": "Validation RegEx",
 	"validation_message": "Validation Message",
 	"directus_type": "Directus Type",
@@ -344,6 +349,8 @@
 	"notice": "Notice",
 	"slug": "Slug",
 	"repeater": "Repeater",
+	"max-amount": "Max Amount",
+	"select_mode": "Select Mode",
 
 	"months": {
 		"january": "January",
@@ -404,7 +411,10 @@
 	"primary_key_field": "Primary Key Field",
 	"type": "Type",
 	"number": "Number",
+	"true": "True",
+	"false": "False",
 	"creating_new_collection": "Creating New Collection",
+	"creating_new_role": "Creating New Role",
 	"status": "Status",
 	"sort": "Sort",
 	"created_by": "Created By",
@@ -454,7 +464,12 @@
 	"user_count": "No Users | One User | {count} Users",
 	"no_users_copy": "There are no users in this role yet.",
 
+	"webhooks_count": "No Webhooks | One Webhook | {count} Webhooks",
+	"no_webhooks_copy": "There are no webhooks yet.",
+
 	"all_items": "All Items",
+
+	"csv": "CSV",
 
 	"no_collections": "No Collections",
 	"create_collection": "Create Collection",
@@ -520,6 +535,7 @@
 
 	"formatted_value": "Formatted Value",
 	"format_title": "Format Title",
+	"inline_title": "Inline Title",
 	"auto_format_casing": "Auto-format casing",
 
 	"errors": {
@@ -611,7 +627,7 @@
 	"collections_shown": "Collections Shown",
 	"visible_collections": "Visible Collections",
 	"hidden_collections": "Hidden Collections",
-	"unmanaged_collections": "Unmanaged Collections",
+	"unmanaged_collections": "Unconfigured Collections",
 	"system_collections": "System Collections",
 
 	"slider": "Slider",
@@ -623,6 +639,7 @@
 	"step_interval": "Step Interval",
 	"icon_left": "Icon Left",
 	"icon_right": "Icon Right",
+	"trimed": "Trimed",
 	"font_family": "Font Family",
 	"font": "Font",
 	"numeric": "Numeric",
@@ -734,6 +751,7 @@
 	"role_only": "Role Only",
 	"update": "Update",
 
+	"edit_fields": "Edit Fields",
 	"select_fields": "Select Fields",
 	"readable_fields": "Readable Fields",
 	"writable_fields": "Writable Fields",
@@ -744,9 +762,6 @@
 	"status_badge": "Status (Badge)",
 	"tags": "Tags",
 	"format_text": "Format Text",
-
-	"outline": "Outline",
-	"use_outline_variant": "Use the outline variant",
 
 	"bold": "Bold",
 	"subdued": "Subdued",
@@ -1141,6 +1156,10 @@
   "image": "Image",
   "in_list": "One of these",
   "info": "Info",
+  "normal": "Normal",
+  "success": "Success",
+  "warning": "Warning",
+  "danger": "Danger",
   "initial_schema": "Choose an Initial Schema",
   "initial_schema_copy": "Choose from existing database architectures or start fresh. You can always extend and tweak this later.",
   "install": "Install",

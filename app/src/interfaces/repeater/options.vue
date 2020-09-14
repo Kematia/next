@@ -1,10 +1,23 @@
 <template>
-	<div>
-		<p class="type-label">Template</p>
-		<v-input class="input" v-model="template" :placeholder="`{{ field }}`" />
+	<div class="grid">
+		<div class="grid-element half">
+			<p class="type-label">{{ $t('template') }}</p>
+			<v-input class="input" v-model="template" :placeholder="`{{ field }}`" />
+		</div>
 
-		<p class="type-label">Fields</p>
-		<repeater v-model="repeaterValue" :template="`{{ field }} — {{ interface }}`" :fields="repeaterFields" />
+		<div class="grid-element half">
+			<p class="type-label">{{ $t('interfaces.repeater.edit_fields') }}</p>
+			<repeater
+				v-model="repeaterValue"
+				:template="`{{ field }} — {{ interface }}`"
+				:fields="repeaterFields"
+			/>
+		</div>
+
+		<div class="grid-element full">
+			<p class="type-label">{{ $t('interfaces.repeater.add_label') }}</p>
+			<v-input class="input" v-model="addLabel" :placeholder="$t('add_a_new_item')" />
+		</div>
 	</div>
 </template>
 
@@ -127,17 +140,33 @@ export default defineComponent({
 			},
 		});
 
-		return { repeaterValue, repeaterFields, template };
+		const addLabel = computed({
+			get() {
+				return props.value?.addLabel;
+			},
+			set(newAddLabel: string) {
+				emit('input', {
+					...(props.value || {}),
+					addLabel: newAddLabel,
+				});
+			},
+		});
+
+		return { repeaterValue, repeaterFields, template, addLabel };
 	},
 });
 </script>
 
 <style lang="scss" scoped>
-.type-label {
-	margin-bottom: 4px;
-}
+@import '@/styles/mixins/form-grid';
 
-.input {
-	margin-bottom: 24px;
+.grid {
+	@include form-grid;
+
+	&-element {
+		&.full {
+			grid-column: start/full;
+		}
+	}
 }
 </style>

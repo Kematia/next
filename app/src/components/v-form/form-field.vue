@@ -1,9 +1,5 @@
 <template>
-	<div
-		class="field"
-		:key="field.field"
-		:class="[(field.meta && field.meta.width) || 'full', { invalid: validationError }]"
-	>
+	<div class="field" :key="field.field" :class="[(field.meta && field.meta.width) || 'full', { 'invalid': validationError }]">
 		<v-menu v-if="field.hideLabel !== true" placement="bottom-start" show-arrow :disabled="isDisabled">
 			<template #activator="{ toggle, active }">
 				<form-field-label
@@ -39,9 +35,7 @@
 
 		<small class="note" v-if="field.meta && field.meta.note" v-html="marked(field.meta.note)" />
 
-		<small class="validation-error" v-if="validationError">
-			{{ $t(`validationError.${validationError.type}`, validationError) }}
-		</small>
+		<small class="validation-error" v-if="validationError">{{ $t(`validationError.${validationError.type}`, validationError) }}</small>
 	</div>
 </template>
 
@@ -92,7 +86,7 @@ export default defineComponent({
 		validationError: {
 			type: Object as PropType<ValidationError>,
 			default: null,
-		},
+		}
 	},
 	setup(props) {
 		const isDisabled = computed(() => {
@@ -126,18 +120,19 @@ export default defineComponent({
 }
 
 .invalid {
-	margin: -12px;
-	padding: 12px;
-	background-color: var(--danger-alt);
-	border-radius: var(--border-radius);
 	transition: var(--medium) var(--transition);
 	transition-property: background-color, padding, margin;
+
+	background-color: var(--danger-alt);
+	padding: 12px;
+	margin: -12px;
+	border-radius: var(--border-radius);
 }
 
 .validation-error {
 	display: block;
-	margin-top: 4px;
 	color: var(--danger);
+	margin-top: 4px;
 	font-style: italic;
 }
 </style>

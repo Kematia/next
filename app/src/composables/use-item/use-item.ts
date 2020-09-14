@@ -145,11 +145,9 @@ export function useItem(collection: Ref<string>, primaryKey: Ref<string | number
 			}
 
 			if (err?.response?.data?.errors) {
-				validationErrors.value = err.response.data.errors
-					.filter((err: APIError) => err.extensions.code === 'FAILED_VALIDATION')
-					.map((err: APIError) => {
-						return err.extensions;
-					});
+				validationErrors.value = err.response.data.errors.filter((err: APIError) => err.extensions.code === 'FAILED_VALIDATION').map((err: APIError) => {
+					return err.extensions;
+				});
 			} else {
 				throw err;
 			}
@@ -196,11 +194,9 @@ export function useItem(collection: Ref<string>, primaryKey: Ref<string | number
 			});
 
 			if (err?.response?.data?.errors) {
-				validationErrors.value = err.response.data.errors
-					.filter((err: APIError) => err.extensions.code === 'FAILED_VALIDATION')
-					.map((err: APIError) => {
-						return err.extensions;
-					});
+				validationErrors.value = err.response.data.errors.filter((err: APIError) => err.extensions.code === 'FAILED_VALIDATION').map((err: APIError) => {
+					return err.extensions;
+				});
 			} else {
 				throw err;
 			}

@@ -1,5 +1,8 @@
 <template>
-	<v-select :value="value" :disabled="disabled" :items="items" @input="$emit('input', $event)" />
+	<v-notice v-if="items.length === 0">
+		{{ $t('no_collections') }}
+	</v-notice>
+	<interface-checkboxes v-else :choices="items" @input="$listeners.input" :value="value" :disabled="disabled" />
 </template>
 
 <script lang="ts">
@@ -9,14 +12,14 @@ import { useCollectionsStore } from '@/stores/';
 export default defineComponent({
 	props: {
 		value: {
-			type: String,
+			type: Array,
 			default: null,
 		},
 		disabled: {
 			type: Boolean,
 			default: false,
 		},
-		includeMeta: {
+		includeSystem: {
 			type: Boolean,
 			default: false,
 		},
@@ -25,7 +28,7 @@ export default defineComponent({
 		const collectionsStore = useCollectionsStore();
 
 		const collections = computed(() => {
-			if (props.includeMeta) return collectionsStore.state.collections;
+			if (props.includeSystem) return collectionsStore.state.collections;
 
 			return collectionsStore.state.collections.filter(
 				(collection) => collection.collection.startsWith('directus_') === false

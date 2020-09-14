@@ -4,44 +4,108 @@
 		<div class="grid">
 			<div class="field">
 				<div class="type-label">{{ $t('this_collection') }}</div>
-				<v-input disabled :value="collection" />
+				<v-input disabled :value="relations[0].one_collection" />
 			</div>
 			<div class="field">
 				<div class="type-label">{{ $t('junction_collection') }}</div>
-				<v-select
-					:items="collectionItems"
-					v-model="junctionCollection"
-					:placeholder="$t('select_one')"
-					:disabled="isExisting"
-				/>
+				<v-input :class="{ matches: junctionCollectionExists }" v-model="junctionCollection" :placeholder="$t('collection') + '...'" :disabled="isExisting" db-safe>
+					<template #append>
+						<v-menu show-arrow placement="bottom-end">
+							<template #activator="{ toggle }">
+								<v-icon name="list_alt" @click="toggle" v-tooltip="$t('select_existing')" />
+							</template>
+
+							<v-list dense class="monospace">
+								<v-list-item
+									v-for="item in collectionItems"
+									:key="item.value"
+									:active="relations[0].many_collection === item.value"
+									@click="relations[0].many_collection = item.value"
+								>
+									<v-list-item-content>
+										{{ item.text }}
+									</v-list-item-content>
+								</v-list-item>
+							</v-list>
+						</v-menu>
+					</template>
+				</v-input>
 			</div>
 			<div class="field">
 				<div class="type-label">{{ $t('related_collection') }}</div>
-				<v-select
-					:disabled="type === 'files' || isExisting"
-					:items="collectionItems"
-					v-model="relations[1].one_collection"
-					:placeholder="$t('select_one')"
-				/>
+				<v-input :class="{ matches: relatedCollectionExists }" v-model="relations[1].one_collection" :placeholder="$t('collection') + '...'" :disabled="type === 'files' || isExisting" db-safe>
+					<template #append>
+						<v-menu show-arrow placement="bottom-end">
+							<template #activator="{ toggle }">
+								<v-icon name="list_alt" @click="toggle" v-tooltip="$t('select_existing')" />
+							</template>
+
+							<v-list dense class="monospace">
+								<v-list-item
+									v-for="item in collectionItems"
+									:key="item.value"
+									:active="relations[1].one_collection === item.value"
+									@click="relations[1].one_collection = item.value"
+								>
+									<v-list-item-content>
+										{{ item.text }}
+									</v-list-item-content>
+								</v-list-item>
+							</v-list>
+						</v-menu>
+					</template>
+				</v-input>
 			</div>
 			<v-input disabled :value="relations[0].one_primary" />
-			<v-select
-				:disabled="!junctionCollection || isExisting"
-				:items="junctionFields"
-				v-model="relations[0].many_field"
-				:placeholder="$t('select_one')"
-			/>
+			<v-input v-model="relations[0].many_field" :placeholder="$t('foreign_key') + '...'" :disabled="isExisting" db-safe>
+				<template #append v-if="junctionCollectionExists">
+					<v-menu show-arrow placement="bottom-end">
+						<template #activator="{ toggle }">
+							<v-icon name="list_alt" @click="toggle" v-tooltip="$t('select_existing')" />
+						</template>
+
+						<v-list dense class="monospace">
+							<v-list-item
+								v-for="item in junctionFields"
+								:key="item.value"
+								:active="relations[0].many_field === item.value"
+								@click="relations[0].many_field = item.value"
+							>
+								<v-list-item-content>
+									{{ item.text }}
+								</v-list-item-content>
+							</v-list-item>
+						</v-list>
+					</v-menu>
+				</template>
+			</v-input>
 			<div class="spacer" />
 			<div class="spacer" />
-			<v-select
-				:disabled="!junctionCollection || isExisting"
-				:items="junctionFields"
-				v-model="relations[1].many_field"
-				:placeholder="$t('select_one')"
-			/>
-			<v-input disabled :value="relations[1].one_primary" />
-			<v-icon name="arrow_forward" />
-			<v-icon name="arrow_backward" />
+			<v-input v-model="relations[1].many_field" :placeholder="$t('foreign_key') + '...'" :disabled="isExisting" db-safe>
+				<template #append v-if="junctionCollectionExists">
+					<v-menu show-arrow placement="bottom-end">
+						<template #activator="{ toggle }">
+							<v-icon name="list_alt" @click="toggle" v-tooltip="$t('select_existing')" />
+						</template>
+
+						<v-list dense class="monospace">
+							<v-list-item
+								v-for="item in junctionFields"
+								:key="item.value"
+								:active="relations[1].many_field === item.value"
+								@click="relations[1].many_field = item.value"
+							>
+								<v-list-item-content>
+									{{ item.text }}
+								</v-list-item-content>
+							</v-list-item>
+						</v-list>
+					</v-menu>
+				</template>
+			</v-input>
+			<v-input db-safe :disabled="relatedCollectionExists" v-model="relations[1].one_primary" :placeholder="$t('primary_key') + '...'" />
+			<v-icon class="arrow" name="arrow_forward" />
+			<v-icon class="arrow" name="arrow_backward" />
 		</div>
 	</div>
 </template>
@@ -103,6 +167,14 @@ export default defineComponent({
 			},
 		});
 
+		const junctionCollectionExists = computed(() => {
+			return collectionsStore.getCollection(junctionCollection.value) !== null;
+		});
+
+		const relatedCollectionExists = computed(() => {
+			return collectionsStore.getCollection(state.relations[1].one_collection) !== null;
+		});
+
 		const junctionFields = computed(() => {
 			if (!junctionCollection.value) return [];
 
@@ -116,7 +188,7 @@ export default defineComponent({
 			}));
 		});
 
-		return { relations: state.relations, collectionItems, junctionCollection, junctionFields };
+		return { relations: state.relations, collectionItems, junctionCollection, junctionFields, junctionCollectionExists, relatedCollectionExists };
 	},
 });
 </script>
@@ -129,23 +201,28 @@ export default defineComponent({
 	position: relative;
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 20px;
+	gap: 12px 28px;
 	margin-top: 48px;
 
-	.v-icon {
-		--v-icon-color: var(--foreground-subdued);
+	.v-input.matches {
+		--v-input-color: var(--primary);
+	}
+
+	.v-icon.arrow {
+		--v-icon-color: var(--primary);
 
 		position: absolute;
 		transform: translateX(-50%);
+		pointer-events: none;
 
 		&:first-of-type {
-			bottom: 85px;
-			left: 32.8%;
+			bottom: 78px;
+			left: 32.7%;
 		}
 
 		&:last-of-type {
 			bottom: 14px;
-			left: 67%;
+			left: 67.5%;
 		}
 	}
 }
