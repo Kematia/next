@@ -1,7 +1,8 @@
 <template>
 	<div v-if="selectedLanguage">
 		<!-- We pass all the props but the value -->
-		<v-input v-bind="$attrs" v-model="i18nHandler" :trim="false" />
+		<slug v-bind="$attrs" v-model="i18nHandler" :trim="false" />
+		<div>the slug does not mirror yet</div>
 	</div>
 	<div v-else>
 		<v-notice type="warning">No language provided!</v-notice>
@@ -11,6 +12,8 @@
 import { defineComponent, computed, reactive, ref, nextTick } from '@vue/composition-api';
 import { useWebsitesStore } from '@/stores';
 
+import slug from '../slug/slug.vue';
+
 export default defineComponent({
 	inheritAttrs: false,
 	props: {
@@ -18,6 +21,9 @@ export default defineComponent({
 			type: Object,
 			default: null,
 		},
+	},
+	components: {
+		slug: slug,
 	},
 	setup(props, { emit, attrs }) {
 		const websitesStore = useWebsitesStore();

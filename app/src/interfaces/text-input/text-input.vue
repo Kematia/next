@@ -8,6 +8,7 @@
 		:class="font"
 		@input="$listeners.input"
 	>
+		{{ placeholder }}
 		<template v-if="iconLeft" #prepend><v-icon :name="iconLeft" /></template>
 		<template #append>
 			<span
